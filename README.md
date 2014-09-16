@@ -28,9 +28,9 @@ getter.get("http://nodejs.org/images/logo-light.png", function(err, pixels) { /*
 
 The argument `pixels` to your callback function is a two-dimensional array. Eg:
 
-```javascript
+```json
 [
-    [ { "r": 0, "g": 0, "b": 0 } ]
+    [ { "r": 0, "g": 0, "b": 0, "a": 0 } ]
 ]
 ```
 
