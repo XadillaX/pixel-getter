@@ -36,6 +36,16 @@ The argument `pixels` to your callback function is a two-dimensional array. Eg:
 
 `pixels[0][0]` indicates the first pixel in the first frame. `jpg` and `png` files always have only one frame.
 
+> If you're using GIF format, you may pass the optional parameter `frames` which can be a single number or an array contains
+> starting frame and ending frame.
+>
+> Eg.
+>
+> ```javascript
+> getter.get("foo.gif", function(){}, 1);
+> getter.get("foo.gif", function(){}, [ 1, 2 ]);
+> ```
+
 ## Contribute
 
 You're welcome to fork and pull requests!

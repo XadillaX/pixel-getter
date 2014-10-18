@@ -9,7 +9,7 @@ var spidex = require("spidex");
 var imageType = require('image-type');
 var Getter = require("./lib/getter");
 
-function _get(buff, callback) {
+function _get(buff, callback, frames) {
     var type = imageType(buff);
     if(!type) {
         return callback(new Error("Not an image file buffer."));
@@ -28,7 +28,7 @@ function _get(buff, callback) {
     }
 
     process.nextTick(function() {
-        getter.parse(callback);
+        getter.parse(callback, frames);
     });
 }
 
@@ -36,19 +36,27 @@ function _get(buff, callback) {
  * get pixels
  * @param url
  * @param [callback]
+ * @param [frames]
  */
-exports.get = function(url, callback) {
+exports.get = function(url, callback, frames) {
     if(undefined === callback) callback = function(){};
+    else if(typeof callback !== "function") {
+        frames = callback;
+        callback = function(){};
+    }
+
+    if(undefined === frames) frames = [ 1, 1 ];
+    if(typeof frames === "number") frames = [ frames, frames ];
 
     if(url instanceof Buffer) {
-        return _get(url, callback);
+        return _get(url, callback, frames);
     }
 
     // if it's a URL
     if(-1 !== url.indexOf("://")) {
         spidex.get(url, function(data, status, respHeader) {
             var buff = new Buffer(data, "binary");
-            _get(buff, callback);
+            _get(buff, callback, frames);
         }, "binary").on("error", function(err) {
             callback(err);
         });
@@ -58,6 +66,6 @@ exports.get = function(url, callback) {
     // otherwise, open it locally
     fs.readFile(url, function(err, data) {
         if(err) return callback(err);
-        _get(data, callback);
+        _get(data, callback, frames);
     });
 };
