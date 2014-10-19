@@ -1,6 +1,6 @@
 {
   "name": "pixel-getter",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Image pixels information getter for node.js.",
   "main": "index.js",
   "directories": {
