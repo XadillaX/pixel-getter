@@ -46,6 +46,13 @@ The argument `pixels` to your callback function is a two-dimensional array. Eg:
 > getter.get("foo.gif", function(){}, [ 1, 2 ]);
 > ```
 
+You can also set a timeout for downloading:
+
+```javascript
+getter.get("http://foo/bar.jpg", function() {}, 1, 10000);
+// means 10000ms is the max time
+```
+
 ## Contribute
 
 You're welcome to fork and pull requests!
