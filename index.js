@@ -37,11 +37,13 @@ function _get(buff, callback, frames) {
  * @param url
  * @param [callback]
  * @param [frames]
+ * @param [timeout]
  */
-exports.get = function(url, callback, frames) {
+exports.get = function(url, callback, frames, timeout) {
     if(undefined === callback) callback = function(){};
     else if(typeof callback !== "function") {
-        frames = callback;
+        timeout  = frames;
+        frames   = callback;
         callback = function(){};
     }
 
@@ -54,10 +56,12 @@ exports.get = function(url, callback, frames) {
 
     // if it's a URL
     if(-1 !== url.indexOf("://")) {
-        spidex.get(url, function(data, status, respHeader) {
-            var buff = new Buffer(data, "binary");
+        spidex.get(url, {
+            charset: "binary",
+            timeout: timeout
+        }, function(buff) {
             _get(buff, callback, frames);
-        }, "binary").on("error", function(err) {
+        }).on("error", function(err) {
             callback(err);
         });
         return;
