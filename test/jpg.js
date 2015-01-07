@@ -5,7 +5,7 @@
  * reserved.
  */
 var getter = require("../");
-getter.get("http://xcoder.in/images/background/flandre/p551983_asuka_roze%20danmaku%20flandre_scarlet%20remilia_scarlet%20touhou.jpg", function(err, pixels) {
+getter.get("https://raw.githubusercontent.com/eugeneware/jpeg-js/master/test/fixtures/unconventional-table.jpg", function(err, pixels) {
     if(err) {
         return console.log(err);
     }
