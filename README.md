@@ -1,6 +1,6 @@
 # Pixel Getter
 
-Image pixels information getter for node.js.
+Image pixels information getter for node.js with ❤.
 
 ## Installation
 
