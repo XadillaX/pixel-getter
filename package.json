@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "image-type": "~1.0.0",
-    "jpeg-js": "~0.1.1",
+    "jpeg-js": "~0.4.0",
     "png-js": "~0.1.1",
     "readimage": "~1.1.1",
     "spidex": "~2.0.1"
