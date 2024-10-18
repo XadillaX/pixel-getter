@@ -1,7 +1,7 @@
 {
   "name": "pixel-getter",
   "version": "1.0.0",
-  "description": "Image pixels information getter for Node.js.",
+  "description": "A powerful tool for retrieving image pixel information in Node.js. It supports various image formats and provides both Promise-based and callback-based APIs for flexibility.",
   "main": "lib/index.js",
   "files": [
     "lib"
