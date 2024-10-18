@@ -1,58 +1,128 @@
 # Pixel Getter
 
-Image pixels information getter for node.js with ❤.
+[![npm version](https://img.shields.io/npm/v/pixel-getter.svg)](https://npmjs.org/pixel-getter)
+[![npm downloads](https://img.shields.io/npm/dm/pixel-getter.svg)](https://npmjs.org/pixel-getter)
+[![Build Status](https://github.com/XadillaX/pixel-getter/workflows/Node.js%20CI/badge.svg)](https://github.com/XadillaX/pixel-getter/actions)
+[![Coverage Status](https://img.shields.io/coveralls/XadillaX/pixel-getter/master.svg)](https://coveralls.io/github/XadillaX/pixel-getter?branch=master)
+
+Pixel Getter is a powerful tool for retrieving image pixel information in Node.js. It supports various image formats and provides both Promise-based and callback-based APIs for flexibility.
 
 ## Installation
 
+To install Pixel Getter, run the following command:
+
 ```sh
-$ npm install pixel-getter
+$ npm install --save pixel-getter
 ```
 
 ## Usage
 
-Only `jpg / jpeg`, `png`, `gif` format are supported so far.
+Pixel Getter currently supports the following image formats: `JPG`, `PNG`, and `GIF`.
 
-At first you should require it:
+### Basic Usage
 
-```javascript
-var getter = require("pixel-getter");
+First, require the Pixel Getter module:
+
+```js
+const pixelGetter = require('pixel-getter');
 ```
 
-You can pass ***image buffer***, ***local filename*** or even ***remote url*** to get it's pixel information.
+You can pass an **image buffer**, **local filename**, or **remote URL** to retrieve pixel information.
 
-```javascript
-getter.get("eg.jpg", function(err, pixels) { /** ... */ });
-getter.get(new Buffer(...), function(err, pixels) { /** ... */ });
-getter.get("http://nodejs.org/images/logo-light.png", function(err, pixels) { /** ... */ });
+#### Using Promises
+
+```js
+const ret = await getter.get("eg.jpg");
+const ret = await getter.get(new Buffer(...));
+const ret = await getter.get("https://nodejs.org/images/logo-light.png");
 ```
 
-The argument `pixels` to your callback function is a two-dimensional array. Eg:
+#### Using Callbacks
+
+```js
+getter.get("eg.jpg", function(err, pixels) {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log(pixels);
+  }
+});
+
+getter.get(new Buffer(...), function(err, pixels) {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log(pixels);
+  }
+});
+
+getter.get("https://nodejs.org/images/logo-light.png", function(err, pixels) {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log(pixels);
+  }
+});
+```
+
+#### Pixel Information
+
+The `pixels` argument passed to your callback function or the promise result is a two-dimensional array. For example:
 
 ```json
 [
-    [ { "r": 0, "g": 0, "b": 0, "a": 0 } ]
+  [ { "r": 0, "g": 0, "b": 0, "a": 0 } ]
 ]
 ```
 
-`pixels[0][0]` indicates the first pixel in the first frame. `jpg` and `png` files always have only one frame.
+- `pixels[0][0]` represents the first pixel in the first frame.
+- `JPG` and `PNG` files always have only one frame.
 
-> If you're using GIF format, you may pass the optional parameter `frames` which can be a single number or an array contains
-> starting frame and ending frame.
->
-> Eg.
->
-> ```javascript
-> getter.get("foo.gif", function(){}, 1);
-> getter.get("foo.gif", function(){}, [ 1, 2 ]);
-> ```
+### GIF Support
 
-You can also set a timeout for downloading:
+When working with GIF files, you can specify the optional `frames` parameter, which can be a single number or an array containing the starting and ending frames.
 
-```javascript
-getter.get("http://foo/bar.jpg", function() {}, 1, 10000);
-// means 10000ms is the max time
+#### Using Promises
+
+```js
+const ret = await getter.get("foo.gif", 0);
+const ret = await getter.get("foo.gif", [0, 1]);
 ```
 
-## Contribute
+#### Using Callbacks
 
-You're welcome to fork and pull requests!
+```js
+getter.get("foo.gif", function(err, pixels) {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log(pixels);
+  }
+}, 0);
+
+getter.get("foo.gif", function(err, pixels) {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log(pixels);
+  }
+}, [0, 1]);
+```
+
+### Timeout Setting
+
+You can also set a timeout for downloading remote images:
+
+```js
+getter.get("http://foo/bar.jpg", function(err, pixels) {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log(pixels);
+  }
+}, 10000); // 10000ms is the max time
+```
+
+## Contributing
+
+We welcome contributions! Feel free to fork the repository and submit pull requests.

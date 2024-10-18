@@ -1,21 +1,17 @@
 {
   "name": "pixel-getter",
-  "version": "0.0.5",
-  "description": "Image pixels information getter for node.js.",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
-  "dependencies": {
-    "image-type": "~1.0.0",
-    "jpeg-js": "~0.4.4",
-    "png-js": "~0.1.1",
-    "readimage": "~1.1.1",
-    "spidex": "~2.0.1"
-  },
-  "devDependencies": {},
+  "version": "1.0.0",
+  "description": "Image pixels information getter for Node.js.",
+  "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
   "scripts": {
-    "test": "node test/png.js"
+    "build": "tsc -p tsconfig.build.json",
+    "coverage": "nyc --reporter=lcov --reporter=html mocha -r ../../../../test/argv.js -r ts-node/register test/**/*.test.ts",
+    "coveralls": "nyc report --reporter=text-lcov | coveralls",
+    "prepublish": "npm run build",
+    "test": "nyc --reporter=lcov --reporter=text-summary mocha -r ../../../../test/argv.js -r ts-node/register test/**/*.test.ts"
   },
   "repository": {
     "type": "git",
@@ -30,9 +26,34 @@
     "jpeg"
   ],
   "author": "XadillaX",
-  "license": "GPLv2",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/XadillaX/pixel-getter/issues"
   },
-  "homepage": "https://github.com/XadillaX/pixel-getter"
+  "homepage": "https://github.com/XadillaX/pixel-getter",
+  "dependencies": {
+    "@cf-wasm/png": "^0.1.22",
+    "image-type": "^4.0.0",
+    "jpeg-js": "^0.4.4",
+    "readimage": "^1.1.1",
+    "spidex": "^3.0.1",
+    "webp-wasm": "^1.0.6"
+  },
+  "devDependencies": {
+    "@chi_eee/gif-decoder": "^2.0.6",
+    "@types/mocha": "^10.0.9",
+    "@types/node": "^22.7.6",
+    "@types/should": "^11.2.0",
+    "coveralls": "^3.1.1",
+    "eslint": "^8.57.1",
+    "eslint-config-egg": "^14.0.0",
+    "eslint-plugin-import": "^2.31.0",
+    "jimp": "^1.6.0",
+    "mocha": "^10.7.3",
+    "ntss": "^1.0.0",
+    "nyc": "^17.1.0",
+    "should": "^13.2.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
 }
