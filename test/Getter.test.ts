@@ -9,14 +9,24 @@ import should from 'should';
 
 import * as getter from '../src';
 
+process.on('uncaughtException', err => {
+  console.error(err);
+});
+
 describe('PixelGetter', function() {
   this.timeout(0);
 
-  this.beforeAll(async () => {
-    await import('ntss');
+  before(() => {
+    if (fs.existsSync(path.join(__dirname, '../node_modules/ntss/index.js'))) {
+      const content = fs.readFileSync(path.join(__dirname, '../node_modules/ntss/index.js'), 'utf8');
+      fs.writeFileSync(
+        path.join(__dirname, '../node_modules/ntss/index.js'),
+        content.replace('lib/show_File', 'lib/show_file'));
+    }
+    require('ntss');
   });
 
-  this.afterAll(done => {
+  after(done => {
     const handles = (process as any)._getActiveHandles();
     for (const handle of handles) {
       if (handle instanceof net.Server) {
