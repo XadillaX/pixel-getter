@@ -1,147 +1,232 @@
 import * as fs from 'fs';
 
-import * as Getter from './Getter';
+import { createDeferred, createGetter, ParseReturnType, PixelType, RGB, RGBA } from './Getters/Getter';
 import imageType from 'image-type';
 import * as spidex from 'spidex';
 
-type CallbackType<N> =
-  N extends keyof Getter.FactoryMap ?
-    Getter.FactoryMap[N] extends Getter.Getter<infer C, infer M> ?
-      Getter.PixelGetterCallback<C, M> :
-      Getter.PixelGetterCallback<Getter.RGB | Getter.RGBA, boolean> :
-    Getter.PixelGetterCallback<Getter.RGB | Getter.RGBA, boolean>;
+export interface PixelGetterOptions<Type extends PixelType = PixelType.AUTO> {
+  pixelType?: Type;
+  frames?: number | [number, number];
+  timeout?: number;
+}
 
-function _get<N extends keyof Getter.FactoryMap>(buff: Buffer, callback: CallbackType<N>, frames: [ number, number ]) {
-  const type = imageType(buff);
-  if (!type) {
-    process.nextTick(() => {
-      callback(new Error('Not an image type.'));
-    });
-    return;
-  }
+type CallbackSecondArg<Type extends PixelType, R extends boolean = false> = ParseReturnType<
+  R extends true
+    ? Buffer
+    : R extends boolean
+    ? Type extends PixelType.RGB
+      ? RGB[]
+      : Type extends PixelType.RGBA
+      ? RGBA[]
+      : RGB[] | RGBA[]
+    : never,
+  Type
+>;
 
-  let getter: Getter.FactoryMap[N] extends Getter.Getter<any, any> ?
-    Getter.FactoryMap[N] :
-    Getter.Getter<Getter.RGB | Getter.RGBA, boolean>;
-  switch (type.ext) {
-    case 'gif':
-      getter = Getter.createGetter('GIF', buff) as any;
-      break;
+export type RawCallback<Type extends PixelType = PixelType.AUTO> = (
+  err: Error | undefined,
+  pixels?: CallbackSecondArg<Type, true>
+) => void;
+export type RawPromise<Type extends PixelType = PixelType.AUTO> = Promise<CallbackSecondArg<Type, true>>;
 
-    case 'jpg':
-      getter = Getter.createGetter('JPG', buff) as any;
-      break;
+export type PixelObjectCallback<Type extends PixelType = PixelType.AUTO> = (
+  err: Error | undefined,
+  pixels?: CallbackSecondArg<Type, false>
+) => void;
+export type PixelObjectPromise<Type extends PixelType = PixelType.AUTO> = Promise<CallbackSecondArg<Type, false>>;
 
-    case 'png':
-      getter = Getter.createGetter('PNG', buff) as any;
-      break;
-
-    default:
-      process.nextTick(() => {
-        callback(new Error(`Image type ${type.ext} is not supported.`));
-      });
-      return;
-  }
-
-  process.nextTick(() => {
-    getter.parse(callback, frames);
+function nextTick() {
+  return new Promise<void>(resolve => {
+    process.nextTick(resolve);
   });
 }
 
-type PromiseGetType<N extends (keyof Getter.FactoryMap | any)> = (
-  N extends keyof Getter.FactoryMap ?
-    Getter.FactoryMap[N] extends Getter.Getter<infer C> ?
-      C :
-      Getter.RGB | Getter.RGBA :
-    Getter.RGB | Getter.RGBA)[][];
-
-export function get<N extends (keyof Getter.FactoryMap | any)>(
-  url: string,
-  callback: CallbackType<N>,
-  frames?: number | [ number, number ],
-  timeout?: number
-): void;
-
-export function get<N extends (keyof Getter.FactoryMap | any)>(
-  url: string,
-  frames?: number | [ number, number ],
-  timeout?: number
-): Promise<PromiseGetType<N>>;
-
-export function get<N extends (keyof Getter.FactoryMap | any)>(
+async function innerGet<R extends boolean>(
   buff: Buffer,
-  callback: CallbackType<N>,
-  frames?: number | [ number, number ],
-  timeout?: number
-): void;
+  frames: [number, number],
+  returnType: PixelType,
+  returnRaw: R
+): Promise<CallbackSecondArg<PixelType, R>> {
+  const type = imageType(buff);
+  if (!type) {
+    await nextTick();
+    throw new Error('Not an image type.');
+  }
 
-export function get<N extends (keyof Getter.FactoryMap | any)>(
-  buff: Buffer,
-  frames?: number | [ number, number ],
-  timeout?: number
-): Promise<PromiseGetType<N>>;
+  const getter = createGetter(type.ext.toUpperCase(), buff);
 
-export function get<N extends (keyof Getter.FactoryMap | any)>(
+  if (returnRaw) {
+    return getter.parseRaw(frames, returnType) as any;
+  }
+
+  return getter.parse(frames, returnType) as any;
+}
+
+function outerGet<Type extends PixelType, R extends boolean>(
   url: string | Buffer,
-  callback?: CallbackType<N> | number | [ number, number ],
-  frames?: number | [ number, number ],
-  timeout?: number
-): Promise<PromiseGetType<N>> | void {
+  returnRaw: R,
+  options?:
+    | PixelGetterOptions<Type>
+    | (R extends true ? RawCallback<Type> : R extends false ? PixelObjectCallback<Type> : RawCallback<Type>),
+  callback?: R extends true ? RawCallback<Type> : R extends false ? PixelObjectCallback<Type> : RawCallback<Type>
+) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {
+      pixelType: PixelType.AUTO as Type,
+    };
+  }
+
+  if (!options) {
+    options = {
+      pixelType: PixelType.AUTO as Type,
+    };
+  }
+
+  options = {
+    pixelType: (options.pixelType || PixelType.AUTO) as Type,
+    frames: options.frames || [0, 0],
+    timeout: options.timeout || 0,
+  };
+
+  if (!Array.isArray(options.frames)) {
+    options.frames = [options.frames, options.frames] as [number, number];
+  }
+
+  let promise: ReturnType<typeof innerGet<R>> | undefined;
   const usePromise = typeof callback !== 'function';
-  let promise: Promise<PromiseGetType<N>> | undefined = undefined;
-
   if (usePromise) {
-    timeout = frames as number;
-    frames = callback as [ number, number ];
-
-    let resolve;
-    let reject;
-    promise = new Promise((res, rej) => {
-      resolve = res;
-      reject = rej;
-    });
-    callback = ((err, pix) => {
+    const deferred = createDeferred<Awaited<ReturnType<typeof innerGet<R>>>>();
+    promise = deferred.promise;
+    callback = ((err: Error, pixels: CallbackSecondArg<Type, R>) => {
       if (err) {
-        reject(err);
+        deferred.reject(err);
         return;
       }
 
-      resolve(pix);
+      deferred.resolve(pixels);
+    }) as typeof callback;
+  }
+
+  const doBuffer = async (buff: Buffer) => {
+    let ret: Awaited<ReturnType<typeof innerGet<R>>>;
+    try {
+      ret = await innerGet(
+        buff,
+        (options as PixelGetterOptions).frames as [number, number],
+        (options as PixelGetterOptions).pixelType as Type,
+        returnRaw
+      );
+    } catch (e) {
+      callback!(e);
       return;
-    }) as any;
-  }
-
-  if (frames === undefined) frames = [ 0, 0 ];
-  if (typeof frames === 'number') frames = [ frames, frames ];
-
-  if (Buffer.isBuffer(url)) {
-    _get(url, callback as CallbackType<N>, frames);
-    return promise;
-  }
-
-  if (url.indexOf('://') !== -1) {
-    spidex.get(url, {
-      charset: 'binary',
-      timeout,
-    }, buff => {
-      _get(buff, callback as CallbackType<N>, frames as [ number, number ]);
-    }).on('error', callback as CallbackType<N>);
-    return promise;
-  }
-
-  fs.readFile(url, (err, data) => {
-    if (err) {
-      (callback as CallbackType<N>)(err);
-    } else {
-      _get(data, callback as CallbackType<N>, frames as [ number, number ]);
     }
-  });
+    callback!(undefined, ret as any);
+  };
+
+  const sourceType = Buffer.isBuffer(url) ? 'buffer' : url.indexOf('://') !== -1 ? 'url' : 'file';
+  switch (sourceType) {
+    case 'buffer':
+      doBuffer(url as Buffer);
+      break;
+
+    case 'url':
+      spidex
+        .get(
+          url as string,
+          {
+            timeout: options.timeout,
+            charset: 'binary',
+          },
+          doBuffer
+        )
+        .on('error', callback!);
+      break;
+
+    case 'file':
+      // eslint-disable-next-line node/prefer-promises/fs
+      fs.readFile(url as string, (err, buff) => {
+        if (err) {
+          callback!(err);
+          return;
+        }
+        doBuffer(buff);
+      });
+      break;
+
+    default:
+      throw new Error('Invalid url');
+  }
 
   return promise;
 }
 
-export {
-  RGB,
-  RGBA,
-  PixelGetterCallback
-} from './Getter';
+export function get<Type extends PixelType = PixelType.AUTO>(
+  url: string,
+  options: PixelGetterOptions<Type>,
+  callback: PixelObjectCallback<Type>
+): void;
+
+export function get<Type extends PixelType = PixelType.AUTO>(
+  buff: Buffer,
+  options: PixelGetterOptions<Type>,
+  callback: PixelObjectCallback<Type>
+): void;
+
+export function get<Type extends PixelType = PixelType.AUTO>(url: string, callback: PixelObjectCallback<Type>): void;
+
+export function get<Type extends PixelType = PixelType.AUTO>(buff: Buffer, callback: PixelObjectCallback<Type>): void;
+
+export function get<Type extends PixelType = PixelType.AUTO>(
+  url: string,
+  options?: PixelGetterOptions<Type>
+): Promise<CallbackSecondArg<Type, false>>;
+
+export function get<Type extends PixelType = PixelType.AUTO>(
+  buff: Buffer,
+  options?: PixelGetterOptions<Type>
+): Promise<CallbackSecondArg<Type, false>>;
+
+export function get<Type extends PixelType = PixelType.AUTO>(
+  url: string | Buffer,
+  options?: PixelGetterOptions<Type> | PixelObjectCallback<Type>,
+  callback?: PixelObjectCallback<Type>
+) {
+  return outerGet(url, false, options, callback);
+}
+
+export function getRaw<Type extends PixelType = PixelType.AUTO>(
+  url: string,
+  options: PixelGetterOptions<Type>,
+  callback: RawCallback<Type>
+): void;
+
+export function getRaw<Type extends PixelType = PixelType.AUTO>(
+  buff: Buffer,
+  options: PixelGetterOptions<Type>,
+  callback: RawCallback<Type>
+): void;
+
+export function getRaw<Type extends PixelType = PixelType.AUTO>(url: string, callback: RawCallback<Type>): void;
+
+export function getRaw<Type extends PixelType = PixelType.AUTO>(buff: Buffer, callback: RawCallback<Type>): void;
+
+export function getRaw<Type extends PixelType = PixelType.AUTO>(
+  url: string,
+  options?: PixelGetterOptions<Type>
+): Promise<CallbackSecondArg<Type, true>>;
+
+export function getRaw<Type extends PixelType = PixelType.AUTO>(
+  buff: Buffer,
+  options?: PixelGetterOptions<Type>
+): Promise<CallbackSecondArg<Type, true>>;
+
+export function getRaw<Type extends PixelType = PixelType.AUTO>(
+  url: string | Buffer,
+  options?: PixelGetterOptions<Type> | RawCallback<Type>,
+  callback?: RawCallback<Type>
+) {
+  return outerGet(url, true, options, callback);
+}
+
+export { RGB, RGBA, PixelType } from './Getters/Getter';

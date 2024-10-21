@@ -1,6 +1,6 @@
 {
   "name": "pixel-getter",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A powerful tool for retrieving image pixel information in Node.js. It supports various image formats and provides both Promise-based and callback-based APIs for flexibility.",
   "main": "lib/index.js",
   "files": [
@@ -10,6 +10,7 @@
     "build": "tsc -p tsconfig.build.json",
     "coverage": "nyc --reporter=lcov --reporter=html mocha -r ../../../../test/argv.js -r ts-node/register test/**/*.test.ts",
     "coveralls": "nyc report --reporter=text-lcov | coveralls",
+    "lint": "eslint --ext .js,.ts src test",
     "prepublish": "npm run build",
     "test": "nyc --reporter=lcov --reporter=text-summary mocha -r ../../../../test/argv.js -r ts-node/register test/**/*.test.ts"
   },
@@ -45,7 +46,7 @@
     "@types/node": "^22.7.6",
     "@types/should": "^11.2.0",
     "coveralls": "^3.1.1",
-    "eslint": "^8.57.1",
+    "eslint": "^8.0.0",
     "eslint-config-egg": "^14.0.0",
     "eslint-plugin-import": "^2.31.0",
     "jimp": "^1.6.0",
@@ -54,6 +55,6 @@
     "nyc": "^17.1.0",
     "should": "^13.2.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "typescript": "~5.5.0"
   }
 }
