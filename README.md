@@ -9,7 +9,7 @@ Pixel Getter is a powerful Node.js tool designed to extract pixel information fr
 
 ## Important Notice: Breaking Changes
 
-**Version 4 introduces significant updates and breaking changes. If you're upgrading from v3, please carefully review the new usage instructions.**
+**Version 2 introduces significant updates and breaking changes. If you're upgrading from v1, please carefully review the new usage instructions.**
 
 ## Installation
 
