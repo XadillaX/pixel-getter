@@ -9,9 +9,9 @@ export interface RGBA extends RGB {
 }
 
 export enum PixelType {
-  RGB,
-  RGBA,
-  AUTO,
+  AUTO = 0,
+  RGB = 'rgb',
+  RGBA = 'rgba',
 }
 
 export interface ParseReturnType<P, T extends PixelType = PixelType.AUTO> {
